@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Votaciones</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --bg1:#0f2027;
+  --bg2:#203a43;
+  --bg3:#2c5364;
+  --accent:#00c6ff;
+  --accent2:#0072ff;
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  font-family:'Inter', sans-serif;
+  background: linear-gradient(135deg,var(--bg1),var(--bg2),var(--bg3));
+  color:white;
+  min-height:100vh;
+}
+
+/* HEADER */
+.header{
+  text-align:center;
+  padding:30px 20px 10px;
+}
+
+.header h1{
+  font-weight:700;
+  letter-spacing:0.5px;
+}
+
+/* USER */
+.usuario{
+  text-align:center;
+  margin-bottom:30px;
+  font-size:16px;
+  opacity:0.8;
+}
+
+/* CONTENEDOR */
+.container{
+  max-width:600px;
+  margin:auto;
+  padding:20px;
+}
+
+/* FORM */
+.form{
+  margin-bottom:30px;
+  background: rgba(255,255,255,0.08);
+  padding:20px;
+  border-radius:18px;
+  backdrop-filter: blur(10px);
+}
+
+.form h3{
+  margin-bottom:15px;
+  font-weight:600;
+}
+
+/* INPUTS PRO */
+.form input, .form textarea{
+  width:100%;
+  padding:12px;
+  margin-bottom:12px;
+  border-radius:10px;
+  outline:none;
+  border:1px solid rgba(255,255,255,0.2);
+  background:rgba(255,255,255,0.1);
+  color:white;
+  transition:0.3s;
+}
+
+.form input::placeholder,
+.form textarea::placeholder{
+  color:#ccc;
+}
+
+.form input:focus,
+.form textarea:focus{
+  border:1px solid var(--accent);
+  box-shadow:0 0 10px rgba(0,198,255,0.5);
+}
+
+/* BOTONES */
+button{
+  padding:10px 18px;
+  border:none;
+  border-radius:10px;
+  background:linear-gradient(45deg,var(--accent),var(--accent2));
+  color:white;
+  cursor:pointer;
+  font-weight:600;
+  transition:0.3s;
+}
+
+button:hover{
+  transform:scale(1.05);
+  box-shadow:0 5px 15px rgba(0,198,255,0.4);
+}
+
+/* LISTAS */
+h3{
+  margin-bottom:15px;
+  font-weight:600;
+  opacity:0.9;
+}
+
+.lista-card{
+  background: rgba(255,255,255,0.08);
+  backdrop-filter: blur(10px);
+  padding:15px;
+  border-radius:15px;
+  margin-bottom:15px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  box-shadow:0 10px 25px rgba(0,0,0,0.3);
+  transition:0.3s;
+}
+
+.lista-card:hover{
+  transform:translateY(-3px);
+}
+
+.lista-info{
+  display:flex;
+  flex-direction:column;
+}
+
+.lista-info span{
+  font-weight:600;
+  margin-bottom:3px;
+}
+
+.lista-info small{
+  opacity:0.6;
+  font-size:13px;
+}
+
+/* LOGOUT */
+.logout{
+  position:absolute;
+  top:20px;
+  right:20px;
+  opacity:0.8;
+}
+
+.logout:hover{
+  opacity:1;
+}
+
+/* MENSAJE */
+#mensaje{
+  text-align:center;
+  margin-top:10px;
+  font-size:14px;
+  opacity:0.9;
+}
+
+/* LOADER */
+.loader{
+  text-align:center;
+  margin-top:20px;
+  opacity:0.7;
+}
+</style>
+</head>
+
+<body>
+
+<button class="logout" onclick="cerrarSesion()">Cerrar sesión</button>
+
+<div class="header">
+  <h1>Sistema de Votación</h1>
+</div>
+
+<div class="usuario" id="usuario"></div>
+
+<div class="container">
+
+  <div class="form">
+    <h3>Crear lista</h3>
+    <input type="text" id="nombre_lista" placeholder="Nombre de la lista">
+    <textarea id="descripcion" placeholder="Descripción"></textarea>
+    <button onclick="crearLista()">Crear</button>
+    <p id="mensaje"></p>
+  </div>
+
+  <h3>Listas disponibles</h3>
+
+  <div id="listas"></div>
+  <div class="loader" id="loader">Cargando listas...</div>
+
+</div>
+
+<script>
+const usuario = JSON.parse(localStorage.getItem("usuario"));
+
+if (!usuario) {
+    window.location.href = "index.html";
+}
+
+document.getElementById("usuario").innerHTML =
+    "Bienvenido, " + usuario.nombre_de_usuario;
+
+function cargarListas(){
+    fetch('http://127.0.0.1:3000/listas')
+    .then(res => res.json())
+    .then(data => {
+        const contenedor = document.getElementById("listas");
+        const loader = document.getElementById("loader");
+
+        loader.style.display = "none";
+        contenedor.innerHTML = '';
+
+        data.forEach(lista => {
+            const div = document.createElement("div");
+            div.classList.add("lista-card");
+
+            div.innerHTML = `
+                <div class="lista-info">
+                    <span>${lista.nombre_lista}</span>
+                    <small>${lista.descripcion}</small>
+                </div>
+                <button onclick="verOpciones(${lista.id_lista})">Entrar</button>
+            `;
+
+            contenedor.appendChild(div);
+        });
+    });
+}
+
+function crearLista(){
+    const nombre = document.getElementById("nombre_lista").value;
+    const descripcion = document.getElementById("descripcion").value;
+    const mensaje = document.getElementById("mensaje");
+
+    if(!nombre || !descripcion){
+        mensaje.innerHTML = "Completa todos los campos";
+        return;
+    }
+
+    fetch('http://127.0.0.1:3000/crear-lista', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+            nombre_lista: nombre,
+            descripcion,
+            id_usuario: usuario.id_usuario
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        mensaje.innerHTML = data.mensaje;
+
+        document.getElementById("nombre_lista").value = "";
+        document.getElementById("descripcion").value = "";
+
+        cargarListas();
+    });
+}
+
+function verOpciones(id_lista) {
+    localStorage.setItem("id_lista", id_lista);
+    window.location.href = "opciones.html";
+}
+
+function cerrarSesion(){
+    localStorage.removeItem("usuario");
+    window.location.href = "index.html";
+}
+
+cargarListas();
+</script>
+
+</body>
+</html>
