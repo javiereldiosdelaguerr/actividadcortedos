@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Opciones</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --bg1:#0f2027;
+  --bg2:#203a43;
+  --bg3:#2c5364;
+  --accent:#00c6ff;
+  --accent2:#0072ff;
+  --danger:#ff4d4d;
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  font-family:'Inter', sans-serif;
+  background: linear-gradient(135deg,var(--bg1),var(--bg2),var(--bg3));
+  color:white;
+}
+
+/* HEADER */
+.header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:20px 30px;
+}
+
+.titulo-lista{
+  text-align:center;
+  margin-top:10px;
+  font-size:18px;
+  opacity:0.8;
+}
+
+/* CONTENEDOR */
+.container{
+  max-width:700px;
+  margin:auto;
+  padding:20px;
+}
+
+/* FORM */
+.form{
+  background: rgba(255,255,255,0.08);
+  padding:15px;
+  border-radius:15px;
+  margin-bottom:20px;
+}
+
+.form input{
+  width:100%;
+  padding:10px;
+  border-radius:10px;
+  border:none;
+  margin-bottom:10px;
+}
+
+/* CARDS */
+.opcion-card{
+  background: rgba(255,255,255,0.08);
+  padding:15px;
+  border-radius:15px;
+  margin-bottom:10px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+.opcion-info{
+  font-weight:500;
+}
+
+/* BOTONES */
+button{
+  padding:8px 14px;
+  border:none;
+  border-radius:8px;
+  background:linear-gradient(45deg,var(--accent),var(--accent2));
+  color:white;
+  cursor:pointer;
+}
+
+.delete{
+  background:var(--danger);
+  margin-left:10px;
+}
+
+button:disabled{
+  background:gray;
+}
+
+/* RESULTADOS */
+.resultados{
+  margin-top:30px;
+}
+
+.barra{
+  background:rgba(255,255,255,0.1);
+  border-radius:10px;
+  overflow:hidden;
+  margin-top:5px;
+}
+
+.barra div{
+  height:10px;
+  background:linear-gradient(45deg,var(--accent),var(--accent2));
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="header">
+  <span onclick="volver()">Volver</span>
+  <h2>Opciones</h2>
+</div>
+
+<div class="titulo-lista" id="nombreLista"></div>
+
+<div class="container">
+
+  <!-- CREAR OPCION -->
+  <div class="form">
+    <input type="text" id="nueva_opcion" placeholder="Nueva opción">
+    <button onclick="crearOpcion()">Agregar opción</button>
+  </div>
+
+  <div id="opciones"></div>
+
+  <div class="resultados" id="resultados"></div>
+
+</div>
+
+<script>
+const usuario = JSON.parse(localStorage.getItem("usuario"));
+const id_lista = localStorage.getItem("id_lista");
+
+if (!usuario || !id_lista) {
+    window.location.href = "index.html";
+}
+
+//  MOSTRAR NOMBRE DE LA LISTA
+fetch('http://127.0.0.1:3000/listas')
+.then(res => res.json())
+.then(data => {
+    const lista = data.find(l => l.id_lista == id_lista);
+    if(lista){
+        document.getElementById("nombreLista").innerText =
+            "Lista: " + lista.nombre_lista;
+    }
+});
+
+// VERIFICAR SI YA VOTÓ
+let yaVoto = false;
+
+fetch(`http://127.0.0.1:3000/verificar-voto/${usuario.id_usuario}/${id_lista}`)
+.then(res => res.json())
+.then(data => {
+    yaVoto = data.yaVoto;
+});
+
+// CARGAR OPCIONES
+function cargarOpciones(){
+    fetch(`http://127.0.0.1:3000/opciones/${id_lista}`)
+    .then(res => res.json())
+    .then(data => {
+        const contenedor = document.getElementById("opciones");
+        contenedor.innerHTML = '';
+
+        data.forEach(op => {
+            const div = document.createElement("div");
+            div.classList.add("opcion-card");
+
+            div.innerHTML = `
+                <div class="opcion-info">${op.descripcion}</div>
+                <div>
+                    <button ${yaVoto ? 'disabled' : ''} onclick="votar(${op.id_opcion})">Votar</button>
+                    <button class="delete" onclick="eliminar(${op.id_opcion})">X</button>
+                </div>
+            `;
+
+            contenedor.appendChild(div);
+        });
+    });
+}
+
+// CREAR OPCION
+function crearOpcion(){
+    const descripcion = document.getElementById("nueva_opcion").value;
+
+    if(!descripcion) return;
+
+    fetch('http://127.0.0.1:3000/crear-opcion', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ descripcion, id_lista })
+    })
+    .then(() => {
+        document.getElementById("nueva_opcion").value = "";
+        cargarOpciones();
+    });
+}
+
+//  ELIMINAR OPCION
+function eliminar(id){
+    fetch(`http://127.0.0.1:3000/eliminar-opcion/${id}`, {
+        method:'DELETE'
+    })
+    .then(() => cargarOpciones());
+}
+
+// VOTAR
+function votar(id_opcion){
+    fetch('http://127.0.0.1:3000/votar', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+            id_usuario: usuario.id_usuario,
+            id_opcion,
+            id_lista
+        })
+    })
+    .then(res => res.json())
+    .then(() => {
+        yaVoto = true;
+        cargarOpciones();
+        cargarResultados();
+    });
+}
+
+// RESULTADOS
+function cargarResultados(){
+    fetch(`http://127.0.0.1:3000/resultados/${id_lista}`)
+    .then(res => res.json())
+    .then(data => {
+        const contenedor = document.getElementById("resultados");
+        contenedor.innerHTML = "<h3>Resultados</h3>";
+
+        let total = data.reduce((sum, op) => sum + op.votos, 0);
+
+        data.forEach(op => {
+            const porcentaje = total ? (op.votos / total) * 100 : 0;
+
+            contenedor.innerHTML += `
+                <div>
+                    ${op.descripcion} (${op.votos})
+                    <div class="barra">
+                        <div style="width:${porcentaje}%"></div>
+                    </div>
+                </div>
+            `;
+        });
+    });
+}
+
+function volver(){
+    window.location.href = "votacion.html";
+}
+
+cargarOpciones();
+cargarResultados();
+</script>
+
+</body>
+</html>
