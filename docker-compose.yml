@@ -19,7 +19,8 @@ services:
       MYSQL_ROOT_PASSWORD: 1234
       MYSQL_DATABASE: votacion
     volumes:
-      - mysql_data:/var/lib/mysql   
-      
+      - mysql_data:/var/lib/mysql
+      - ./backend/init.sql:/docker-entrypoint-initdb.d/init.sql   
+
 volumes:
   mysql_data:

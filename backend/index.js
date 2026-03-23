@@ -1,11 +1,10 @@
 const express = require('express');
 const mysql = require('mysql2');
 const cors = require('cors');
-
 const app = express();
-
 app.use(cors());
 app.use(express.json());
+
 
 const db = mysql.createPool({
     host: 'db',
@@ -17,7 +16,7 @@ const db = mysql.createPool({
 });
 
 app.get('/', (req, res) => {
-    res.send('Servidor funcionando');
+    res.send('Servidor funcionando 🚀');
 });
 
 app.get('/usuarios', (req, res) => {
@@ -27,8 +26,15 @@ app.get('/usuarios', (req, res) => {
     });
 });
 
+
 app.post('/login', (req, res) => {
     const { correo, contrasena } = req.body;
+
+    if (!correo || !contrasena) {
+        return res.status(400).json({
+            mensaje: "Faltan datos"
+        });
+    }
 
     const sql = `
         SELECT id_usuario, nombre_de_usuario, apellido_de_usuario, correo_electronico
@@ -41,23 +47,30 @@ app.post('/login', (req, res) => {
 
         if (result.length > 0) {
             return res.json({
-                mensaje: "Login correcto",
+                mensaje: "Login correcto 🔥",
                 usuario: result[0]
             });
         }
 
         res.status(401).json({
-            mensaje: "Credenciales incorrectas"
+            mensaje: "Credenciales incorrectas ❌"
         });
     });
 });
 
+
 app.post('/registro', (req, res) => {
     const { nombre, apellido, telefono, correo, contrasena } = req.body;
 
+
+    if (!nombre || !apellido || !telefono || !correo || !contrasena) {
+        return res.status(400).json({
+            mensaje: "Todos los campos son obligatorios"
+        });
+    }
+
     const checkSql = `
-        SELECT * FROM usuarios 
-        WHERE correo_electronico = ?
+        SELECT * FROM usuarios WHERE correo_electronico = ?
     `;
 
     db.query(checkSql, [correo], (err, result) => {
@@ -65,7 +78,7 @@ app.post('/registro', (req, res) => {
 
         if (result.length > 0) {
             return res.status(400).json({
-                mensaje: "El correo ya está registrado"
+                mensaje: "El correo ya está registrado ❌"
             });
         }
 
@@ -79,7 +92,7 @@ app.post('/registro', (req, res) => {
             if (err) return res.status(500).json({ error: err });
 
             res.json({
-                mensaje: "Usuario creado correctamente"
+                mensaje: "Usuario creado correctamente ✅"
             });
         });
     });
@@ -91,6 +104,7 @@ app.get('/listas', (req, res) => {
         res.json(result);
     });
 });
+
 
 app.post('/crear-lista', (req, res) => {
     const { nombre_lista, descripcion, id_usuario } = req.body;
@@ -111,10 +125,11 @@ app.post('/crear-lista', (req, res) => {
         if (err) return res.status(500).json({ error: err });
 
         res.json({
-            mensaje: "Lista creada correctamente"
+            mensaje: "Lista creada correctamente 📋"
         });
     });
 });
+
 
 app.post('/crear-opcion', (req, res) => {
     const { descripcion, id_lista } = req.body;
@@ -134,7 +149,7 @@ app.post('/crear-opcion', (req, res) => {
         if (err) return res.status(500).json({ error: err });
 
         res.json({
-            mensaje: "Opción creada correctamente"
+            mensaje: "Opción creada correctamente 🧾"
         });
     });
 });
@@ -148,24 +163,25 @@ app.delete('/eliminar-opcion/:id', (req, res) => {
         (err) => {
             if (err) return res.status(500).json({ error: err });
 
-            res.json({ mensaje: "Opción eliminada" });
+            res.json({ mensaje: "Opción eliminada ❌" });
         }
     );
 });
 
+
 app.get('/opciones/:id_lista', (req, res) => {
     const { id_lista } = req.params;
 
-    const sql = `
-        SELECT * FROM opciones 
-        WHERE id_lista = ?
-    `;
-
-    db.query(sql, [id_lista], (err, result) => {
-        if (err) return res.status(500).json({ error: err });
-        res.json(result);
-    });
+    db.query(
+        'SELECT * FROM opciones WHERE id_lista = ?',
+        [id_lista],
+        (err, result) => {
+            if (err) return res.status(500).json({ error: err });
+            res.json(result);
+        }
+    );
 });
+
 
 app.get('/verificar-voto/:id_usuario/:id_lista', (req, res) => {
     const { id_usuario, id_lista } = req.params;
@@ -181,6 +197,7 @@ app.get('/verificar-voto/:id_usuario/:id_lista', (req, res) => {
     );
 });
 
+// 🗳️ VOTAR
 app.post('/votar', (req, res) => {
     const { id_usuario, id_opcion, id_lista } = req.body;
 
@@ -200,7 +217,7 @@ app.post('/votar', (req, res) => {
 
         if (result.length > 0) {
             return res.status(400).json({
-                mensaje: "Ya votaste en esta lista"
+                mensaje: "Ya votaste en esta lista ❌"
             });
         }
 
@@ -214,11 +231,12 @@ app.post('/votar', (req, res) => {
             if (err) return res.status(500).json({ error: err });
 
             res.json({
-                mensaje: "Voto registrado correctamente"
+                mensaje: "Voto registrado correctamente "
             });
         });
     });
 });
+
 
 app.get('/resultados/:id_lista', (req, res) => {
     const { id_lista } = req.params;
@@ -237,6 +255,7 @@ app.get('/resultados/:id_lista', (req, res) => {
     });
 });
 
+
 app.listen(3000, () => {
-    console.log('Servidor corriendo en puerto 3000');
+    console.log('Servidor corriendo en puerto 3000 ');
 });
