@@ -16,7 +16,7 @@ const db = mysql.createPool({
 });
 
 app.get('/', (req, res) => {
-    res.send('Servidor funcionando 🚀');
+    res.send('Servidor funcionando');
 });
 
 app.get('/usuarios', (req, res) => {
@@ -47,13 +47,13 @@ app.post('/login', (req, res) => {
 
         if (result.length > 0) {
             return res.json({
-                mensaje: "Login correcto 🔥",
+                mensaje: "Login correcto",
                 usuario: result[0]
             });
         }
 
         res.status(401).json({
-            mensaje: "Credenciales incorrectas ❌"
+            mensaje: "Credenciales incorrectas"
         });
     });
 });
@@ -78,7 +78,7 @@ app.post('/registro', (req, res) => {
 
         if (result.length > 0) {
             return res.status(400).json({
-                mensaje: "El correo ya está registrado ❌"
+                mensaje: "El correo ya está registrado"
             });
         }
 
@@ -92,7 +92,7 @@ app.post('/registro', (req, res) => {
             if (err) return res.status(500).json({ error: err });
 
             res.json({
-                mensaje: "Usuario creado correctamente ✅"
+                mensaje: "Usuario creado correctamente"
             });
         });
     });
@@ -125,7 +125,7 @@ app.post('/crear-lista', (req, res) => {
         if (err) return res.status(500).json({ error: err });
 
         res.json({
-            mensaje: "Lista creada correctamente 📋"
+            mensaje: "Lista creada correctamente"
         });
     });
 });
@@ -149,7 +149,7 @@ app.post('/crear-opcion', (req, res) => {
         if (err) return res.status(500).json({ error: err });
 
         res.json({
-            mensaje: "Opción creada correctamente 🧾"
+            mensaje: "Opción creada correctamente"
         });
     });
 });
@@ -163,7 +163,7 @@ app.delete('/eliminar-opcion/:id', (req, res) => {
         (err) => {
             if (err) return res.status(500).json({ error: err });
 
-            res.json({ mensaje: "Opción eliminada ❌" });
+            res.json({ mensaje: "Opción eliminada" });
         }
     );
 });
@@ -217,7 +217,7 @@ app.post('/votar', (req, res) => {
 
         if (result.length > 0) {
             return res.status(400).json({
-                mensaje: "Ya votaste en esta lista ❌"
+                mensaje: "Ya votaste en esta lista"
             });
         }
 
